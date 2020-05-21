@@ -18,6 +18,7 @@ import { Plugin, DialogflowApp, Contexts, DialogflowConversation, GoogleCloudDia
 
 export interface SessionEntityType {
   name: string
+  entityOverrideMode: string
   entities: {
     value: string
     synonyms: string[]
@@ -59,9 +60,16 @@ export class SessionEntitiesPlugin {
 
   send() {
     const responseBody = this.conv.serialize() as ResponseBody
+
+
+
     const convBody = this.conv.body as GoogleCloudDialogflowV2WebhookRequest
+
+    convBody.entityOverrideMode = 'ENTITY_OVERRIDE_MODE_OVERRIDE'
+
     responseBody.sessionEntityTypes = this.entities.map(entity => {
       entity.name = `${convBody.session}/entityTypes/${entity.name}`
+      entity.entityOverrideMode = 'ENTITY_OVERRIDE_MODE_OVERRIDE'
       return entity
     })
     this.conv.json(responseBody)
@@ -75,10 +83,10 @@ export interface SessionEntitiesHelperConversation extends DialogflowConversatio
 export const sessionEntitiesHelper = (): Plugin<
   DialogflowApp<{}, {}, Contexts, DialogflowConversation<{}, {}>>,
   {}> => {
-    return (app) => {
-      app.middleware(conv => {
-        const sessionEntities = new SessionEntitiesPlugin(conv)
-        return Object.assign(conv, { sessionEntities } as SessionEntitiesHelperConversation)
-      })
-    }
+  return (app) => {
+    app.middleware(conv => {
+      const sessionEntities = new SessionEntitiesPlugin(conv)
+      return Object.assign(conv, { sessionEntities } as SessionEntitiesHelperConversation)
+    })
   }
+}
